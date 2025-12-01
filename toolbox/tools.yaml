@@ -1,0 +1,62 @@
+sources:
+  my-pg-source:
+    kind: postgres
+    host: 10.5.0.7
+    port: 5432
+    database: refresh
+    user: postgres
+    password: sQl2025!
+tools:
+    get-student-info:
+        kind: postgres-sql
+        source: my-pg-source
+        description: Get the data for a particular student. If the student exist reply with the student data in json format. If the student does't exist reply with 'null'
+        parameters:
+            - name: username
+              type: string
+              description: The name of the user
+        statement: SELECT * FROM public.students WHERE username=$1
+    add-student:
+        kind: postgres-sql
+        source: my-pg-source
+        description: Add a student.
+        parameters:
+            - name: username
+              type: string
+              description: The name of the student to add
+            - name: email
+              type: string 
+              description: The email of the student to add
+        statement: INSERT INTO public.students (id, username, email, created_at, updated_at) VALUES(nextval('users_id_seq'::regclass), $1, $2, now(), now()) returning id;
+    add-session:
+        kind: postgres-sql
+        source: my-pg-source
+        description: Add a session.
+        parameters:
+            - name: student_id
+              type: integer
+              description: The id of the user who own the session
+            - name: name
+              type: string
+              description: The name of the session
+            - name: guid
+              type: string
+              description: The session guid related to agent session service
+        statement: INSERT INTO public.sessions (id, student_id, name, guid) VALUES(nextval('sessions_id_seq'::regclass), $1, $2, $3) returning id;
+    get-last-session:
+        kind: postgres-sql
+        source: my-pg-source
+        description: Get the last session for a specific student identified by it's 'student_id'. If a session exists reply with session data in json format. If a session doen't exist reply with 'null' 
+        parameters:
+            - name: student_id
+              type: integer
+              description: The id of the user who own the session
+        statement: SELECT guid, name FROM public.sessions where student_id=$1;
+    
+
+toolsets:
+  login-toolset:
+    - get-student-info
+    - add-student
+    - add-session
+    - get-last-session

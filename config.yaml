@@ -1,0 +1,91 @@
+#REFRESH
+#Responsible Educational Friend Running Engaging Study Helper
+ 
+networks:
+    container_network:
+        driver: bridge
+        ipam:
+         config:
+           - subnet: 10.5.0.0/24
+             gateway: 10.5.0.1
+    
+services:
+
+    postgre_18_1:
+        build: ./postgres
+        restart: always
+        networks:
+            container_network:
+                ipv4_address: 10.5.0.7
+        ports:
+            - target: 5432
+              published: 15432
+        stdin_open: true # docker run -i
+        tty: true        # docker run -t
+        #profiles:
+        #    - donotstart # non lancia il container
+    
+    mcp_toolbox:
+        build: ./toolbox
+        depends_on:
+          postgre_18_1:
+            condition: service_started
+        privileged: true
+        networks:
+            container_network:
+                ipv4_address: 10.5.0.6
+        ports:
+            - target: 5000
+              published: 15000
+        stdin_open: true # docker run -i
+        tty: true        # docker run -t
+        #profiles:
+        #    - donotstart # non lancia il container
+        entrypoint: ["/home/start.sh"]
+        command: tail -F anything 
+   
+    adk:
+        build: ./adk
+        depends_on:
+          mcp_toolbox:
+            condition: service_started
+        networks:
+            container_network:
+                ipv4_address: 10.5.0.5
+        ports:
+            - target: 8000
+              published: 18000
+        stdin_open: true # docker run -i
+        tty: true        # docker run -t
+        #profiles:
+        #    - donotstart # non lancia il container
+        entrypoint: ["/home/start.sh"]
+        command: tail -F anything 
+        
+    web_server:
+        build: ./web_server
+        depends_on:
+          adk:
+            condition: service_started
+        networks:
+            container_network:
+                ipv4_address: 10.5.0.8
+        ports:
+            - target: 8888
+              published: 18888
+        stdin_open: true # docker run -i
+        tty: true        # docker run -t
+        #profiles:
+        #    - donotstart # non lancia il container
+        entrypoint: ["/home/start.sh"]
+        command: tail -F anything 
+              
+              
+              
+              
+              
+              
+              
+              
+              
+        
