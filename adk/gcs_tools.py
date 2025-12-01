@@ -11,6 +11,8 @@ GCS_LIST_BLOBS_MAX_RESULTS = int(os.getenv("GCS_LIST_BLOBS_MAX_RESULTS"))
 GOOGLE_CLOUD_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT_ID")
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
+# Tools definition for Google Cloud Storage Interaction
+
 def list_gcs_buckets(
     prefix: Optional[str] = None,
     max_results: Optional[int] = None
@@ -155,5 +157,3 @@ if __name__ == "__main__":
             print("=============================================")
             for blob in blobs['blobs']:
                 print(" - " , blob['name'] , " (" , blob['size'] , " bytes)")
-
-

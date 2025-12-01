@@ -25,7 +25,7 @@ from callback import before_agent_callback, after_agent_callback
 from rag_tools import import_document_to_corpus_tool, retrieve_context_tool
 from gcs_tools import list_gcs_buckets_tool, list_blobs_in_bucket_tool
 
-from question_agent import question_agent_tool
+from question_agent import question_agent_tool, question_agent
 
 activity_agent = LlmAgent(
     name="activity_agent",
@@ -35,19 +35,21 @@ activity_agent = LlmAgent(
                  "You are the agent responsible to interact with a student after the login. You will help students with their study sessions. \n" \
                  "**INITIAL INTERACTION**\n" \
                  "Greet the user and present these three options:\n" \
-                 "1.  **List files** List the files available in Google Cloud Storage (GCS) bucket. " \
-                 "2.  **Import file** Import a file from Google Cloud Storage (GCS) bucket to RAG corpus. \n" \
-                 "3.  **Create question** Create a question based on user prompt and RAG Searching. \n" \
+                 "1.  **File list** List the files available in Google Cloud Storage (GCS) bucket. " \
+                 "2.  **File import** Import a file from Google Cloud Storage (GCS) bucket to RAG corpus. \n" \
+                 "3.  **Study evaluation** Test the user knowledge based on user prompt and RAG Searching. \n" \
                  "**COMMAND LOGIC**\n" \
                  "Identify the user's intent and perform one of the following actions:\n" \
                  "- If the user select option 1. call tool 'list_blobs_in_bucket' passing 'bucket_name'={bucket_name}. "\
                  " Then Always parse the tool output extract the list of blobs with size less than 7000000 and present them to the user. \n" \
                  "- If the user select option 2 ask for the filename to import. "\
                  " Then call tool 'import_document_to_corpus' passing 'bucket_name'={bucket_name}, 'corpus_id'={corpus_id} and 'file_name' equal to the filename selected by the user. \n" \
-                 "- If the user select option 3 always call tool 'question_agent' and ask the tool to create a question. \n" \
+                 "- If the user select option 3 delegate the conversation to 'question_agent'. \n" \
+                 "Do not translate the 'question_agent' replies. \n" \
                  "**ERROR HANDLING**\n" \
                  "If the user requests an operation not listed above, reply: 'I can only assist with the three supported operations. Please select 1, 2, or 3.'",
-    tools = [list_blobs_in_bucket_tool, import_document_to_corpus_tool, question_agent_tool],
+    tools = [list_blobs_in_bucket_tool, import_document_to_corpus_tool],
+    sub_agents=[question_agent],
     before_tool_callback=before_tool_callback,  
     after_tool_callback=after_tool_callback,
     before_agent_callback=before_agent_callback,
@@ -56,6 +58,7 @@ activity_agent = LlmAgent(
 
 import asyncio
 
+# Main function in order to test the single agent
 if __name__ == "__main__":
     
     APP_NAME = "RefreshApp"

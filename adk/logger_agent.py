@@ -109,6 +109,7 @@ logger_agent = LlmAgent(
 
 import asyncio
 
+# Main function in order to test the single agent
 if __name__ == "__main__":
     
     APP_NAME = "RefreshApp"

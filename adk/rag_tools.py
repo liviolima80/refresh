@@ -30,6 +30,8 @@ RAG_CORPUS = f"projects/{GOOGLE_CLOUD_PROJECT_ID}/locations/{GOOGLE_CLOUD_LOCATI
 # Initialize Vertex AI API
 vertexai.init(project=GOOGLE_CLOUD_PROJECT_ID, location=GOOGLE_CLOUD_LOCATION)
 
+# tool definition for VertexAI RAG Engine Interaction
+
 def list_rag_corpora() -> Dict[str, Any]:
     """
     Lists all RAG corpora in the current project and location.

@@ -24,20 +24,25 @@ from callback import before_agent_callback, after_agent_callback
 
 from rag_tools import import_document_to_corpus_tool, retrieve_context_tool
 
+generate_content_config=types.GenerateContentConfig(temperature=2)
+
 question_agent = Agent(
     name="question_agent",
+    generate_content_config = generate_content_config,
     model="gemini-2.5-pro",  # Or another supported model
     description="you create question based on RAG searching",
     instruction="**ROLE**\n" \
                 "You are an agent responsible to create a question and evaluate the answer. \n" \
                 "Your role is to create a specific question based on documents retrieved by 'retrieve_context' tool, analyze the user reply and provide a score. \n" \
+                "You do not to create question based on your internal knowledge. \n" \
+                "You do not have to retrieve content before ask to user the topic. \n" \
+                "Translate to Italian your replies. \n" \
                 "**INTERACTION**.\n"\
                 "- ask the user the topic which it's interested to if not provided\n" \
                 "- always call tool 'retrieve_context' for retrieve information. \n" \
                 "- create a single question only based on the corpus. " \
-                "  You are not allowed to create question based on your internal knowledge. " \
                 "  After creating the question you need to translate your question in Italian language. \n" \
-                "- analyze the user reply, compare to the information retrieved and grade it with a score from 1 to 5. provide the user a clear reply only with the score",
+                "- analyze the user reply, compare to the information retrieved and grade it with a score from 1 to 5. provide the user a reply with the score and a comment about the score",
     tools = [retrieve_context_tool],
     before_tool_callback=before_tool_callback,  
     after_tool_callback=after_tool_callback,
@@ -50,6 +55,7 @@ question_agent_tool = AgentTool(question_agent)
 
 import asyncio
 
+# Main function in order to test the single agent
 if __name__ == "__main__":
     
     APP_NAME = "RefreshApp"

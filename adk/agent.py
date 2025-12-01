@@ -41,6 +41,7 @@ if not GOOGLE_API_KEY:
 
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
+# Tools definition
 def check_login_status(tool_context: ToolContext) -> str:
     """
     Check the application's login status. The reply is formatted in json format.
@@ -60,6 +61,7 @@ check_login_status_tool = FunctionTool(func=check_login_status)
 #important: when you refer a tool name in instruction use 'function_name' tool not the name of FunctionTool variable
 # example : use tool 'check_login_status' NOT use tool 'check_login_status_tool'
 
+# Agents definition
 root_agent = LlmAgent(
     name="root_agent",
     model="gemini-2.5-flash-lite",  # Or another supported model
@@ -85,9 +87,7 @@ root_agent = LlmAgent(
     after_agent_callback=after_agent_callback   
 )
 
-# 2. RUNTIME: Initialize the Runner
-# The Runner manages the execution flow and session state.
-# We use InMemorySessionService for this simple example.
+# 2. RUNTIME: Initialize the Runner and Session Service
 
 session_service = InMemorySessionService()
 runner = Runner(agent=root_agent, session_service=session_service, app_name=APP_NAME)
@@ -100,6 +100,7 @@ class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
     user_id: Optional[str] = None
+    reset: Optional[str] = None
 
 # Define the endpoint
 @app.post("/chat")
@@ -131,7 +132,7 @@ async def chat_endpoint(request: ChatRequest):
         current_user_id = request.user_id if (request.user_id and request.user_id != "0") else "0"
 
         if current_user_id == "0":
-            # happens before the
+            # happens before the login
             try:
                 session = await session_service.create_session( app_name=APP_NAME, user_id=current_user_id, session_id=current_session_id, state=initial_state)
                 print("CREATE A NEW SESSION BEFORE LOGIN")
@@ -139,13 +140,23 @@ async def chat_endpoint(request: ChatRequest):
                 session = await session_service.get_session( app_name=APP_NAME, user_id=current_user_id, session_id=current_session_id )
                 print("LOAD A PREVIOUS SESSION DURING LOGIN")
         else:
-            # happens after the login
-            # create a new session for the new user_id
-            # in this mode the root_agent kepp control again
-            # if i don't restart the session with sub-agent one of the sub-agent do not leave the control to root agent
-            initial_state['session_id'] = current_session_id
-            initial_state['user_id'] = current_user_id
-            initial_state['login_status'] = "True"
+            # WORKAROUND WITH SUB-AGENTS
+            # sub-agent works better because keep session context. The drawback is that it maintains the control of the conversation.
+            # in order to restart from parent agent I need to restart the session
+            
+            if request.reset and request.reset == "True":
+                # case 1: after a study session start a new session with a different session_id
+                # in this way the control move back from question_agent to root_agent
+                initial_state['session_id'] = str(uuid.uuid4())
+                initial_state['user_id'] = current_user_id
+                initial_state['login_status'] = "True"
+            else:
+                # case 2: after the login start a new session changing the user_id
+                # in this way the control move back from logger_agent to root_agent
+                initial_state['session_id'] = current_session_id
+                initial_state['user_id'] = current_user_id
+                initial_state['login_status'] = "True"
+            
             try:
                 session = await session_service.create_session( app_name=APP_NAME, user_id=current_user_id, session_id=current_session_id, state=initial_state)
                 print("CREATE A NEW SESSION AFTER LOGIN")
