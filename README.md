@@ -139,8 +139,7 @@ The docker compose config file has been configured in order to expose the HTTP p
     }
     ```
 
-4) Fron End
-   The .NET frontend is accessible at: http://127.0.0.1:18888
+4) Front End: The .NET frontend is accessible at: http://127.0.0.1:18888
 
 5) Example images (in Italian text) are provided in 'images' folder
 
